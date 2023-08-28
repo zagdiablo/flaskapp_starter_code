@@ -19,6 +19,7 @@ def create_app(config_name="DevelopmentConfig"):
     config_name = the name of a config object inside config.py
     """
 
+    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///database.db"
     app.config.from_object(config.DevelopmentConfig)
 
     # Blueprints
