@@ -3,7 +3,8 @@ for admin authentication process
 """
 
 from flask import Blueprint, render_template, redirect, url_for, request
-from flask_login import current_user
+from flask_login import current_user, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from .models import User
 
@@ -55,11 +56,25 @@ def admin_login_hander():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    to_check_username = User.query.filter_by(username==username).first()
+    to_check_username = User.query.filter_by(username=username).first()
 
     if to_check_username:
         if not to_check_username.role == 'admin':
             flash('Username or password is wrong.')
             return redirect('/admin_login')
-        
-        pass #TODO continue admin verivication
+
+        if check_password_hash(to_check_username.password, password):
+            login_user(to_check_username)
+            return redirect(url_for('admin_views.admin_dashboard'))
+
+    flash(f'Something is wrong, if this continues, contact your site administrator.')
+    return redirect('/admin_login')
+
+
+    #
+    # admin logout handler
+    @admin_auth.route('/admin_logout', methods=['GET'])
+    @login_required
+    def admin_logout():
+        logout_user(current_user.get_id())
+        return redirect(url_for('user_views.home'))

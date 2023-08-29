@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager  # TODO implement basic login
 from flask_admin.contrib.sqla import ModelView
+from werkzeug.security import generate_password_hash
 from . import config
 
 import os
@@ -12,6 +13,12 @@ app = Flask(__name__)
 db = SQLAlchemy(app)
 
 
+#
+#
+#
+#
+# create flask aplication instance
+#
 def create_app(config_name="DevelopmentConfig"):
     """
     create an app instance of flask to run a web application
@@ -52,14 +59,47 @@ def create_app(config_name="DevelopmentConfig"):
     if not check_database():
         db.create_all()
 
+    # admin account generation
+    generate_admin_account()
+
     return app
 
 
+#
+# 
 def check_database():
     """
     check if database is exist
+
+    return True/False
     """
 
     if os.path.isfile("database.db"):
         return True
     return False
+
+
+#
+#
+def generate_admin_account():
+    """
+    generate admin account if no user with admin role in the database
+    """
+
+    from .models import User
+
+    accounts = User.query.all()
+    for account in accounts:
+        if account.role == 'admin':
+            print('[-] Admin account already exist, please login using that account.')
+            return
+    
+    new_admin = User(
+        username = 'admin',
+        password = generate_password_hash('password', "pbkdf2:sha256"),
+        role = 'admin'
+    )
+    db.session.add(new_admin)
+    db.session.commit()
+
+    print('[+] Admin account generation success.')
