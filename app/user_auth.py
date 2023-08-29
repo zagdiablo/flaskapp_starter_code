@@ -4,7 +4,7 @@ for user authentication process
 
 from flask import Blueprint, render_template, redirect, flash, url_for, request
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user, login_required
 
 from .models import User
 from . import db
@@ -54,7 +54,10 @@ def user_login_handler():
 
     # if user is loged in, redirect to user profile
     if current_user.get_id():
-        flash(f"Please log out before login in again with other account.")
+        flash(
+            f"Please log out before login in again with other account.",
+            category="error",
+        )
         return redirect(url_for("user_views.user_profile"))
 
     username = request.form.get("username")
@@ -67,7 +70,16 @@ def user_login_handler():
             login_user(to_login_user)
             return redirect(url_for("user_views.user_profile"))
 
-    flash(f"Username or password is wrong.")
+    flash(f"Username or password is wrong.", category="error")
+    return redirect("/login")
+
+
+@user_auth.route("/logout", methods=["GET"])
+@login_required
+def logout():
+    logout_user()
+
+    flash(f"Logout successful", category="success")
     return redirect("/login")
 
 
@@ -111,7 +123,7 @@ def user_register_handler():
 
     # if user is loged in, redirect to user profile
     if current_user.get_id():
-        flash(f"Please log out before registering another account.")
+        flash(f"Please log out before registering another account.", category="error")
         return redirect(url_for("user_views.user_profile"))
 
     username = request.form.get("username")
@@ -121,7 +133,7 @@ def user_register_handler():
     # check if username is already used
     to_check_username = User.query.filter_by(username=username).first()
     if to_check_username:
-        flash(f"Username is aready taken.")
+        flash(f"Username is aready taken.", category="warning")
         return redirect("/register")
 
     # check if password match
@@ -134,9 +146,12 @@ def user_register_handler():
         db.session.add(new_user)
         db.session.commit()
 
-        flash(f"Account successfully created. Please login")
+        flash(f"Account successfully created. Please login", category="success")
+        return redirect("/login")
+    elif password != repassword:
+        flash("Password did not match.", category="error")
         return redirect("/login")
 
     # if all failed, redirect back
-    flash(f"Account creation failed")
+    flash(f"Account creation failed", category="error")
     return redirect("/register")

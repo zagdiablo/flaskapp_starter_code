@@ -14,7 +14,7 @@ user_views = Blueprint("user_views", __name__)
 
 @user_views.route("/home", methods=["GET"])
 def home():
-    return "<h1>home is working</h1>"
+    return render_template("home.html")
 
 
 @user_views.route("/user_profile", methods=["GET"])
