@@ -40,6 +40,11 @@ def create_app(config_name="DevelopmentConfig"):
     app.register_blueprint(admin_auth, url_prefix="/")
     app.register_blueprint(admin_views, url_prefix="/")
 
+    # Error handler
+    from .error_handler import unauthorized_401
+
+    app.register_error_handler(401, unauthorized_401)
+
     # user login configuration
     login_manager = LoginManager(app)
 
